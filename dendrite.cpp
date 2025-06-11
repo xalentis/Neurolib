@@ -25,14 +25,14 @@ void Dendrite::update_membrane_potential() {
     float synaptic_input = integrate_synaptic_inputs();
     membrane_potential = -70.0f + synaptic_input;
     
-    // Simple decay toward resting potential
+    // simple decay toward resting potential
     if (membrane_potential > -70.0f) {
         membrane_potential -= 0.1f;
     }
     
     is_active = (membrane_potential >= -50.0f);
     
-    // Notify parent neuron if we have one
+    // notify parent neuron if we have one
     if (parent_neuron != nullptr) {
         parent_neuron->update_and_check_spike();
     }

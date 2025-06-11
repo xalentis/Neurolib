@@ -3,11 +3,11 @@
 
 Axon::Axon(float len, float diam, bool myelinated, int max_syn)
     : length(len), diameter(diam), is_myelinated(myelinated), synapse_count(0), max_synapses(max_syn) {
-    // Calculate conduction velocity based on myelination and diameter
+    // calculate conduction velocity based on myelination and diameter
     if (is_myelinated) {
-        conduction_velocity = 6.0f * diameter; // Myelinated: 6*diameter m/s
+        conduction_velocity = 6.0f * diameter; // myelinated: 6*diameter m/s
     } else {
-        conduction_velocity = 0.5f * diameter; // Unmyelinated: much slower
+        conduction_velocity = 0.5f * diameter; // unmyelinated: much slower
     }
     
     output_synapses = new Synapse*[max_synapses];

@@ -9,7 +9,7 @@
 #include "axon.h"
 #include "synapse.h"
 
-// Structure to store simulation data for visualization
+// structure to store simulation data for visualization
 struct SimulationData {
     std::vector<std::vector<float>> membrane_potentials; // [timestep][neuron_id]
     std::vector<std::pair<int, int>> spike_events;       // [(timestep, neuron_id)]
@@ -19,19 +19,18 @@ struct SimulationData {
     int total_spikes;
 };
 
-// Global simulation data
+// simulation data
 SimulationData sim_data;
 
-// Utility function to create random connections with higher weights
+// create random connections with higher weights
 void create_random_connections(Neuron** neurons, int neuron_count, int connection_density = 5) {
     for (int i = 0; i < neuron_count; ++i) {
         for (int j = 0; j < connection_density; ++j) {
             int target = rand() % neuron_count;
             if (target != i && neurons[target]->get_dendrite_count() > 0) {
                 int target_dendrite = rand() % neurons[target]->get_dendrite_count();
-                // Increased synaptic weights for stronger connections
-                float weight = 1.5f + static_cast<float>(rand()) / RAND_MAX * 3.0f; // 1.5-4.5mV (higher than original)
-                bool inhibitory = !neurons[i]->get_is_excitatory() || (rand() % 8 == 0); // Reduced inhibition to 12.5%
+                float weight = 1.5f + static_cast<float>(rand()) / RAND_MAX * 3.0f; // 1.5-4.5mV
+                bool inhibitory = !neurons[i]->get_is_excitatory() || (rand() % 8 == 0);
                 
                 neurons[i]->connect_to_neuron(neurons[target], target_dendrite, weight, inhibitory);
             }
@@ -39,23 +38,20 @@ void create_random_connections(Neuron** neurons, int neuron_count, int connectio
     }
 }
 
-// Function to apply background noise/spontaneous activity
+// apply background noise/spontaneous activity
 void apply_background_activity(Neuron** neurons, int neuron_count, float noise_probability = 0.3f) {
     for (int i = 0; i < neuron_count; ++i) {
         if (static_cast<float>(rand()) / RAND_MAX < noise_probability) {
-            // Add small random depolarization to simulate background activity
-            float noise_amplitude = 2.0f + static_cast<float>(rand()) / RAND_MAX * 8.0f; // 2-10mV
-            // This would need a method in your neuron class to add current injection
-            // For now, we'll use a probabilistic spike trigger with increased chance
-            if (static_cast<float>(rand()) / RAND_MAX < 0.25f) { // Increased from 10% to 25% chance for background spike
+            // use a probabilistic spike trigger with increased chance or add method in neuron class to add current injection
+            if (static_cast<float>(rand()) / RAND_MAX < 0.25f) {
                 neurons[i]->spike();
             }
         }
     }
 }
 
-// Function to collect membrane potential data
-void collect_membrane_data(Neuron** neurons, int neuron_count, int timestep) {
+// collect membrane potential data
+void collect_membrane_data(Neuron** neurons, int neuron_count) {
     std::vector<float> potentials;
     float total_potential = 0.0f;
     
@@ -69,12 +65,12 @@ void collect_membrane_data(Neuron** neurons, int neuron_count, int timestep) {
     sim_data.network_activity.push_back(total_potential / neuron_count);
 }
 
-// Function to record spike events
+// record spike events
 void record_spike_event(int timestep, int neuron_id) {
     sim_data.spike_events.push_back(std::make_pair(timestep, neuron_id));
 }
 
-// Function to generate CSV file for membrane potentials
+// generate CSV file for membrane potentials
 void generate_membrane_potential_csv(const std::string& filename, int neuron_count) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -82,14 +78,14 @@ void generate_membrane_potential_csv(const std::string& filename, int neuron_cou
         return;
     }
     
-    // Write header
+    // header
     file << "Timestep";
     for (int i = 0; i < neuron_count; ++i) {
         file << ",Neuron_" << i;
     }
     file << ",Network_Average" << std::endl;
     
-    // Write data
+    // rows
     for (size_t t = 0; t < sim_data.membrane_potentials.size(); ++t) {
         file << t;
         for (int i = 0; i < neuron_count; ++i) {
@@ -102,7 +98,7 @@ void generate_membrane_potential_csv(const std::string& filename, int neuron_cou
     std::cout << "Membrane potential data saved to: " << filename << std::endl;
 }
 
-// Function to generate CSV file for spike events (raster plot data)
+// generate CSV file for spike events (raster plot data)
 void generate_spike_raster_csv(const std::string& filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -110,10 +106,10 @@ void generate_spike_raster_csv(const std::string& filename) {
         return;
     }
     
-    // Write header
+    // header
     file << "Timestep,Neuron_ID,Spike" << std::endl;
     
-    // Write spike events
+    // spike events
     for (const auto& spike : sim_data.spike_events) {
         file << spike.first << "," << spike.second << ",1" << std::endl;
     }
@@ -122,18 +118,18 @@ void generate_spike_raster_csv(const std::string& filename) {
     std::cout << "Spike raster data saved to: " << filename << std::endl;
 }
 
-// Function to generate activity summary CSV
-void generate_activity_summary_csv(const std::string& filename, int neuron_count) {
+// generate activity summary csv
+void generate_activity_summary_csv(const std::string& filename) {
     std::ofstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Could not open " << filename << " for writing." << std::endl;
         return;
     }
     
-    // Write header
+    // header
     file << "Timestep,Total_Spikes,Network_Activity" << std::endl;
     
-    // Count spikes per timestep
+    // spikes per timestep
     std::vector<int> spikes_per_step(sim_data.total_timesteps, 0);
     for (const auto& spike : sim_data.spike_events) {
         if (spike.first < sim_data.total_timesteps) {
@@ -141,7 +137,7 @@ void generate_activity_summary_csv(const std::string& filename, int neuron_count
         }
     }
     
-    // Write data
+    // data
     for (int t = 0; t < sim_data.total_timesteps && t < static_cast<int>(sim_data.network_activity.size()); ++t) {
         file << t << "," << spikes_per_step[t] << "," 
              << std::fixed << std::setprecision(2) << sim_data.network_activity[t] << std::endl;
@@ -151,7 +147,7 @@ void generate_activity_summary_csv(const std::string& filename, int neuron_count
     std::cout << "Activity summary data saved to: " << filename << std::endl;
 }
 
-// Function to generate Python plotting script
+// generate python plotting script
 void generate_python_plotting_script(const std::string& filename, int neuron_count) {
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -236,77 +232,8 @@ void generate_python_plotting_script(const std::string& filename, int neuron_cou
     std::cout << "Python plotting script saved to: " << filename << std::endl;
 }
 
-// Function to generate MATLAB plotting script
-void generate_matlab_plotting_script(const std::string& filename, int neuron_count) {
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open " << filename << " for writing." << std::endl;
-        return;
-    }
-    
-    file << "% MATLAB script to visualize neural network simulation data\n";
-    file << "clear; clc; close all;\n\n";
-    
-    file << "% Load data\n";
-    file << "membrane_data = readtable('membrane_potentials.csv');\n";
-    file << "spike_data = readtable('spike_raster.csv');\n";
-    file << "activity_data = readtable('activity_summary.csv');\n\n";
-    
-    file << "% Create figure\n";
-    file << "figure('Position', [100, 100, 1200, 900]);\n";
-    file << "sgtitle('Enhanced Human Neuron Network Simulation Results', 'FontSize', 16, 'FontWeight', 'bold');\n\n";
-    
-    file << "% Plot 1: Membrane Potentials\n";
-    file << "subplot(2, 2, 1);\n";
-    file << "colors = lines(" << neuron_count << ");\n";
-    file << "hold on;\n";
-    file << "for i = 1:min(" << neuron_count << ", width(membrane_data)-2)\n";
-    file << "    plot(membrane_data.Timestep, membrane_data{:, i+1}, 'Color', colors(i,:), 'LineWidth', 1.5);\n";
-    file << "end\n";
-    file << "yline(-55, '--r', 'Spike Threshold', 'LineWidth', 1.5);\n";
-    file << "xlabel('Timestep');\n";
-    file << "ylabel('Membrane Potential (mV)');\n";
-    file << "title('Membrane Potential Traces');\n";
-    file << "legend('Location', 'eastoutside');\n";
-    file << "grid on;\n\n";
-    
-    file << "% Plot 2: Spike Raster\n";
-    file << "subplot(2, 2, 2);\n";
-    file << "if height(spike_data) > 0\n";
-    file << "    scatter(spike_data.Timestep, spike_data.Neuron_ID, 30, 'filled', 'MarkerFaceAlpha', 0.7);\n";
-    file << "end\n";
-    file << "xlabel('Timestep');\n";
-    file << "ylabel('Neuron ID');\n";
-    file << "title('Spike Raster Plot');\n";
-    file << "yticks(0:" << neuron_count-1 << ");\n";
-    file << "grid on;\n\n";
-    
-    file << "% Plot 3: Network Activity\n";
-    file << "subplot(2, 2, 3);\n";
-    file << "plot(activity_data.Timestep, activity_data.Network_Activity, 'b-', 'LineWidth', 2);\n";
-    file << "xlabel('Timestep');\n";
-    file << "ylabel('Average Membrane Potential (mV)');\n";
-    file << "title('Network Activity');\n";
-    file << "grid on;\n\n";
-    
-    file << "% Plot 4: Spike Count\n";
-    file << "subplot(2, 2, 4);\n";
-    file << "bar(activity_data.Timestep, activity_data.Total_Spikes, 'FaceColor', [1 0.5 0], 'FaceAlpha', 0.7);\n";
-    file << "xlabel('Timestep');\n";
-    file << "ylabel('Number of Spikes');\n";
-    file << "title('Spike Count per Timestep');\n";
-    file << "grid on;\n\n";
-    
-    file << "% Save figure\n";
-    file << "saveas(gcf, 'neural_network_simulation_matlab.png');\n";
-    file << "fprintf('Visualization saved as neural_network_simulation_matlab.png\\n');\n";
-    
-    file.close();
-    std::cout << "MATLAB plotting script saved to: " << filename << std::endl;
-}
-
 int main() {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    std::srand(43);
     
     std::cout << "=== Enhanced Human Neuron Network Simulation with Visualization ===" << std::endl;
     std::cout << "Creating neural network with increased spiking probability..." << std::endl;
@@ -314,16 +241,16 @@ int main() {
     const int NEURON_COUNT = 10;
     Neuron* neurons[NEURON_COUNT];
     
-    // Initialize simulation data
+    // initialize simulation data
     sim_data.total_timesteps = 0;
     sim_data.total_spikes = 0;
     
-    // Create diverse neuron types with bias toward excitatory neurons
+    // create diverse neuron types with bias toward excitatory neurons
     neurons[0] = new PyramidalNeuron();
     neurons[1] = new PyramidalNeuron();
     neurons[2] = new PyramidalNeuron();
-    neurons[3] = new PyramidalNeuron(); // Added extra pyramidal (excitatory)
-    neurons[4] = new Interneuron();     // Reduced inhibitory neurons
+    neurons[3] = new PyramidalNeuron();
+    neurons[4] = new Interneuron();
     neurons[5] = new PurkinjeNeuron();
     neurons[6] = new MotorNeuron();
     neurons[7] = new MotorNeuron();
@@ -337,11 +264,11 @@ int main() {
     std::cout << "- 2 Motor neurons (large, muscle control)" << std::endl;
     std::cout << "- 2 Sensory neurons (input processing)" << std::endl;
     
-    // Create denser connections with stronger weights
-    std::cout << "\nCreating dense synaptic connections with stronger weights..." << std::endl;
-    create_random_connections(neurons, NEURON_COUNT, 6); // Increased connection density
+    // denser connections
+    std::cout << "\nCreating dense synaptic connections..." << std::endl;
+    create_random_connections(neurons, NEURON_COUNT, 6); // increased connection density
     
-    // Display connection information
+    // connection information
     for (int i = 0; i < NEURON_COUNT; ++i) {
         std::cout << "Neuron " << i << " (type " << neurons[i]->get_neuron_type_id() 
                   << "): " << neurons[i]->get_axon()->get_synapse_count() 
@@ -349,24 +276,24 @@ int main() {
                   << " dendrites" << std::endl;
     }
     
-    std::cout << "\n=== Simulating Enhanced Neural Activity with Data Collection ===" << std::endl;
+    std::cout << "\n=== Simulating Neural Activity ===" << std::endl;
     std::cout << "Running simulation until at least 5 spikes occur..." << std::endl;
     
     int timestep = 0;
     int total_spikes = 0;
     const int MIN_SPIKES_REQUIRED = 5;
-    const int MAX_TIMESTEPS = 10000; // Safety limit to prevent infinite loops
+    const int MAX_TIMESTEPS = 50000; // limit to prevent infinite loops
     
-    // Run simulation until we get at least 5 spikes or hit max timesteps
-    while (total_spikes < MIN_SPIKES_REQUIRED && timestep < MAX_TIMESTEPS) {
+    // run simulation until we hit max timesteps
+    while (timestep < MAX_TIMESTEPS) {
         std::cout << "\n--- Timestep " << timestep + 1 << " ---" << std::endl;
         
-        // Collect membrane potential data before updates
-        collect_membrane_data(neurons, NEURON_COUNT, timestep);
+        // collect membrane potential data before updates
+        collect_membrane_data(neurons, NEURON_COUNT);
         
-        // Strategy 1: More frequent direct stimulation (every 2nd timestep for higher probability)
-        if (timestep % 2 == 0) { // Increased frequency from every 3rd to every 2nd
-            int num_stimulated = 1 + rand() % 4; // Stimulate 1-4 neurons (increased from 1-3)
+        // strategy 1: more frequent direct stimulation
+        if (timestep % 2 == 0) {
+            int num_stimulated = 1 + rand() % 4; // stimulate 1-4 neurons
             for (int s = 0; s < num_stimulated; ++s) {
                 int stimulated_neuron = rand() % NEURON_COUNT;
                 std::cout << "Directly stimulating neuron " << stimulated_neuron << std::endl;
@@ -374,29 +301,29 @@ int main() {
             }
         }
         
-        // Strategy 2: Apply background activity/noise (increased probability)
-        apply_background_activity(neurons, NEURON_COUNT, 0.6f); // Increased from 40% to 60%
+        // strategy 2: apply background activity/noise
+        apply_background_activity(neurons, NEURON_COUNT, 0.6f);
         
-        // Strategy 3: More frequent burst stimulation
-        if (timestep % 8 == 0) { // Every 8th timestep instead of specific ones
+        // strategy 3: more frequent burst stimulation
+        if (timestep % 8 == 0) { // every 8th timestep instead of specific ones
             std::cout << "Applying burst stimulation to multiple neurons!" << std::endl;
-            for (int burst = 0; burst < 5; ++burst) { // Increased burst size
+            for (int burst = 0; burst < 5; ++burst) {
                 int burst_neuron = rand() % NEURON_COUNT;
                 neurons[burst_neuron]->spike();
             }
         }
         
-        // Strategy 4: Progressive stimulation intensity
+        // strategy 4: progressive stimulation intensity
         if (timestep > 20 && total_spikes < 2) {
             std::cout << "Low spike activity detected - increasing stimulation intensity!" << std::endl;
-            // Force stimulate more neurons
+            // force stimulate more neurons
             for (int extra = 0; extra < 3; ++extra) {
                 int extra_neuron = rand() % NEURON_COUNT;
                 neurons[extra_neuron]->spike();
             }
         }
         
-        // Update all neurons and check for spikes
+        // update all neurons and check for spikes
         int spike_count = 0;
         for (int i = 0; i < NEURON_COUNT; ++i) {
             if (neurons[i]->update_and_check_spike()) {
@@ -405,8 +332,6 @@ int main() {
                           << neurons[i]->get_membrane_potential() << "mV" << std::endl;
                 spike_count++;
                 total_spikes++;
-                
-                // Record spike event for visualization
                 record_spike_event(timestep, i);
             }
         }
@@ -417,19 +342,19 @@ int main() {
             std::cout << "Timestep spikes: " << spike_count << " | Total spikes so far: " << total_spikes << std::endl;
         }
         
-        // Show membrane potentials of first few neurons
+        // show membrane potentials of neurons
         std::cout << "Membrane potentials: ";
-        for (int i = 0; i < 5 && i < NEURON_COUNT; ++i) {
+        for (int i = 0; i < 10 && i < NEURON_COUNT; ++i) {
             std::cout << "N" << i << ":" << neurons[i]->get_membrane_potential() << "mV ";
         }
         std::cout << std::endl;
         
-        // Add cascade detection
+        // add cascade detection
         if (spike_count >= 3) {
             std::cout << "*** SPIKE CASCADE DETECTED! Multiple neurons firing together ***" << std::endl;
         }
         
-        // Progress indicator
+        // progress
         if (timestep % 10 == 0 && timestep > 0) {
             std::cout << "=== Progress: " << timestep << " timesteps completed, " 
                       << total_spikes << "/" << MIN_SPIKES_REQUIRED << " spikes achieved ===" << std::endl;
@@ -438,11 +363,11 @@ int main() {
         timestep++;
     }
     
-    // Store final simulation parameters
+    // store final simulation parameters
     sim_data.total_timesteps = timestep;
     sim_data.total_spikes = total_spikes;
     
-    // Final results
+    // final results
     std::cout << "\n=== SIMULATION RESULTS ===" << std::endl;
     if (total_spikes >= MIN_SPIKES_REQUIRED) {
         std::cout << "SUCCESS! Achieved " << total_spikes << " spikes in " << timestep << " timesteps!" << std::endl;
@@ -452,38 +377,19 @@ int main() {
         std::cout << "Consider further increasing stimulation parameters." << std::endl;
     }
     
-    // Generate visualization data files
-    std::cout << "\n=== GENERATING VISUALIZATION DATA ===" << std::endl;
+    // generate visualization data files
     generate_membrane_potential_csv("membrane_potentials.csv", NEURON_COUNT);
     generate_spike_raster_csv("spike_raster.csv");
-    generate_activity_summary_csv("activity_summary.csv", NEURON_COUNT);
+    generate_activity_summary_csv("activity_summary.csv");
     
-    // Generate plotting scripts
-    std::cout << "\n=== GENERATING PLOTTING SCRIPTS ===" << std::endl;
+    // generate plotting script
     generate_python_plotting_script("plot_simulation.py", NEURON_COUNT);
-    generate_matlab_plotting_script("plot_simulation.m", NEURON_COUNT);
     
-    std::cout << "\n=== VISUALIZATION INSTRUCTIONS ===" << std::endl;
-    std::cout << "To generate plots, run one of the following:" << std::endl;
-    std::cout << "1. Python: python3 plot_simulation.py" << std::endl;
-    std::cout << "2. MATLAB: run plot_simulation.m" << std::endl;
-    std::cout << "\nRequired dependencies:" << std::endl;
-    std::cout << "- Python: matplotlib, pandas, numpy" << std::endl;
-    std::cout << "- MATLAB: base installation" << std::endl;
+    std::cout << "To generate plots, run the following:" << std::endl;
+    std::cout << "Python: python3 plot_simulation.py" << std::endl;
+
     
-    std::cout << "\n=== Enhanced Simulation Complete ===" << std::endl;
-    std::cout << "Neural activity successfully demonstrated with enhanced spiking through:" << std::endl;
-    std::cout << "- Stronger synaptic weights (1.5-4.5mV vs original 0.5-2.5mV)" << std::endl;
-    std::cout << "- Increased connection density (6 vs original 3-4 connections per neuron)" << std::endl;
-    std::cout << "- Reduced inhibitory connections (12.5% vs 20%)" << std::endl;
-    std::cout << "- More excitatory neurons (4 pyramidal vs 3)" << std::endl;
-    std::cout << "- Adaptive stimulation (every 2nd timestep + 60% background activity)" << std::endl;
-    std::cout << "- Enhanced background noise (25% spike probability vs 10%)" << std::endl;
-    std::cout << "- Progressive intensity scaling based on activity levels" << std::endl;
-    std::cout << "- Guaranteed minimum spike threshold with safety limits" << std::endl;
-    std::cout << "- Complete data collection and visualization generation" << std::endl;
-    
-    // Cleanup
+    // cleanup
     for (int i = 0; i < NEURON_COUNT; ++i) {
         delete neurons[i];
     }
