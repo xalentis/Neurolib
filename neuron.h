@@ -48,4 +48,4 @@ public:
     virtual ~Neuron();
 };
 
-#endif // NEURON_H
+#endif
